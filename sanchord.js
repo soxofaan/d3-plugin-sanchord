@@ -114,7 +114,7 @@ d3.layout.sanchord = function () {
       };
       var throughput = Math.min(nodeInputSums[ni], nodeOutputSums[ni]);
       var dropOff = nodeInputSums[ni] - throughput;
-      var dropIn = nodeInputSums[ni] - throughput;
+      var dropIn = nodeOutputSums[ni] - throughput;
       // Node's input and output flow arcs.
       nodes[ni] = {
         index: ni,
@@ -219,16 +219,10 @@ d3.layout.sanchord = function () {
   // Path generator for node throughputs.
   sanchord.throughput = function () {
     var r = 1;
-    var startAngle = function (d) {
-      return d.throughput.startAngle;
-    };
-    var endAngle = function (d) {
-      return d.throughput.endAngle;
-    };
 
     function throughput(d) {
-      var a0 = startAngle.apply(this, [d]) - 0.5 * Math.PI;
-      var a1 = endAngle.apply(this, [d]) - 0.5 * Math.PI;
+      var a0 = d.throughput.startAngle - 0.5 * Math.PI;
+      var a1 = d.throughput.endAngle - 0.5 * Math.PI;
       var am = (a0 + a1) / 2;
       var x0 = r * Math.cos(a0);
       var y0 = r * Math.sin(a0);
@@ -244,11 +238,12 @@ d3.layout.sanchord = function () {
       var rio = Math.sqrt((xm - xi) * (xm - xi) + (ym - yi) * (ym - yi));
 
       return (
-        "M" + x0 + "," + y0
-        + "A" + [ra, ra, 0, 1, 1, x1, y1].join(",")
-        + "A" + [r, r, 0, 0, 0, xo, yo].join(",")
-        + "A" + [rio, rio, 0, 0, 0, xi, yi].join(",")
-        + "A" + [r, r, 0, 0, 0, x0, y0].join(",")
+        "M" + [x0, y0].join(",") +
+        "A" + [ra, ra, 0, 1, 1, x1, y1].join(",") +
+        "A" + [r, r, 0, 0, 0, xo, yo].join(",") +
+        "A" + [rio, rio, 0, 0, 0, xi, yi].join(",") +
+        "A" + [r, r, 0, 0, 0, x0, y0].join(",") +
+        "Z"
       );
     }
 
@@ -259,7 +254,66 @@ d3.layout.sanchord = function () {
     };
 
     return throughput;
-  }
+  };
+
+  // Path generator for drop-off and drop-in flows
+  sanchord.drop = function () {
+    var type = "dropOff";
+    var innerRadius = 1;
+    var outerRadius = 1.1;
+
+    function drop(d) {
+      if (d[type].value) {
+        var a0 = d[type].startAngle - 0.5 * Math.PI;
+        var a1 = d[type].endAngle - 0.5 * Math.PI;
+        var am = (a0 + a1) / 2;
+        var x0 = innerRadius * Math.cos(a0);
+        var y0 = innerRadius * Math.sin(a0);
+        var x1 = innerRadius * Math.cos(a1);
+        var y1 = innerRadius * Math.sin(a1);
+        var xm = (x0 + x1) / 2;
+        var ym = (y0 + y1) / 2;
+        var xmm = (type == "dropOff" ? (innerRadius + outerRadius) / 2 : outerRadius ) * Math.cos(am);
+        var ymm = (type == "dropOff" ? (innerRadius + outerRadius) / 2 : outerRadius ) * Math.sin(am);
+        var xe = (type == "dropOff" ? outerRadius : (innerRadius + outerRadius) / 2) * Math.cos(am);
+        var ye = (type == "dropOff" ? outerRadius : (innerRadius + outerRadius) / 2) * Math.sin(am);
+        return (
+          "M" + [x0, y0].join(",") +
+          "L" + [xmm + x0 - xm, ymm + y0 - ym].join(",") +
+          "L" + [xe, ye].join(",") +
+          "L" + [xmm + x1 - xm, ymm + y1 - ym].join(",") +
+          "L" + [x1, y1].join(",") +
+          "A" + [innerRadius, innerRadius, 0, 0, 0, x0, y0].join(",") +
+          "Z"
+        );
+      }
+    }
+
+    drop.dropOff = function () {
+      type = "dropOff";
+      return drop;
+    };
+
+    drop.dropIn = function () {
+      type = "dropIn";
+      return drop;
+    };
+
+    drop.innerRadius = function (x) {
+      if (!arguments.length) return innerRadius;
+      innerRadius = x;
+      return drop;
+    };
+
+    drop.outerRadius = function (x) {
+      if (!arguments.length) return outerRadius;
+      outerRadius = x;
+      return drop;
+    };
+
+    return drop;
+
+  };
 
   return sanchord;
 };

@@ -6,16 +6,22 @@
     font: 10px sans-serif;
   }
 
-  .chord path {
+  .chords path {
     fill-opacity: .67;
     stroke: #000;
     stroke-width: .5px;
   }
-  .node path {
+  .nodes path {
     fill-opacity: .67;
     stroke: #000;
     stroke-width: .5px;
+  }
 
+  .nodes .input, .nodes .output {
+    fill-opacity: 1;
+  }
+  .nodes .throughput, .nodes .drop-off, .nodes .drop-in {
+    fill-opacity: .5;
   }
 
 </style>
@@ -41,7 +47,7 @@
   var width = 600;
   var height = 600;
   var innerRadius = Math.min(width, height) * .3;
-  var outerRadius = innerRadius * 1.1;
+  var outerRadius = innerRadius * 1.2;
 
   var fill = d3.scale.ordinal()
           .domain(d3.range(4))
@@ -53,7 +59,7 @@
           .append("g")
           .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
-  var nodes = svg.append("g").selectAll("path")
+  var nodes = svg.append("g").attr("class", "nodes").selectAll("path")
           .data(sanchord.nodes);
 
   var nodesEnter = nodes.enter().append("g")
@@ -72,17 +78,23 @@
   nodesEnter.append("path")
           .attr("class", "output")
           .attr("d", sanchord.nodeArc("output").innerRadius(innerRadius).outerRadius(outerRadius));
-  nodesEnter.append("path")
-          .attr("class", "node")
-          .style("opacity", ".25")
-          .attr("d", sanchord.nodeArc("total").innerRadius(2 * innerRadius - outerRadius).outerRadius(2 * outerRadius - innerRadius));
+//  nodesEnter.append("path")
+//          .attr("class", "node")
+//          .style("opacity", ".25")
+//          .attr("d", sanchord.nodeArc("total").innerRadius(2 * innerRadius - outerRadius).outerRadius(2 * outerRadius - innerRadius));
   nodesEnter.append("path")
           .attr("class", "throughput")
           .attr("d", sanchord.throughput().radius(outerRadius));
+  nodesEnter.append("path")
+          .attr("class", "drop-off")
+          .attr("d", sanchord.drop().dropOff().innerRadius(outerRadius).outerRadius(outerRadius*1.3));
+  nodesEnter.append("path")
+          .attr("class", "drop-in")
+          .attr("d", sanchord.drop().dropIn().innerRadius(outerRadius).outerRadius(outerRadius*1.3));
 
 
   svg.append("g")
-          .attr("class", "chord")
+          .attr("class", "chords")
           .selectAll("path")
           .data(sanchord.chords)
           .enter().append("path")
@@ -95,7 +107,7 @@
   // Returns an event handler for fading a given chord group.
   function fade(opacity) {
     return function (g, i) {
-      svg.selectAll(".chord path")
+      svg.selectAll(".chords path")
               .filter(function (d) {
                 return d.source.outIndex != i && d.target.inIndex != i;
               })
