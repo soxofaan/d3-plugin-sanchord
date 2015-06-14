@@ -1,5 +1,5 @@
 d3.layout.sanchord = function () {
-  var chord = {};
+  var sanchord = {};
   var nodes, chords;
   var matrix, n;
   var nodePadding = 0, ioPadding = 0;
@@ -77,7 +77,7 @@ d3.layout.sanchord = function () {
         var value = matrix[fi][ni];
         rf0 = r;
         r += value * k;
-        inFlows[fi + '-' + ni] = {
+        inFlows[fi + "-" + ni] = {
           outIndex: fi,
           inIndex: ni,
           startAngle: rf0,
@@ -98,7 +98,7 @@ d3.layout.sanchord = function () {
         var value = matrix[ni][fi];
         rf0 = r;
         r += value * k;
-        outFlows[ni + '-' + fi] = {
+        outFlows[ni + "-" + fi] = {
           outIndex: ni,
           inIndex: fi,
           startAngle: rf0,
@@ -112,6 +112,9 @@ d3.layout.sanchord = function () {
         endAngle: r,
         value: nodeOutputSums[ni]
       };
+      var throughput = Math.min(nodeInputSums[ni], nodeOutputSums[ni]);
+      var dropOff = nodeInputSums[ni] - throughput;
+      var dropIn = nodeInputSums[ni] - throughput;
       // Node's input and output flow arcs.
       nodes[ni] = {
         index: ni,
@@ -122,8 +125,24 @@ d3.layout.sanchord = function () {
           startAngle: ri,
           endAngle: r,
           value: nodeSums[ni]
+        },
+        throughput: {
+          startAngle: (ro - ioPadding) - k * throughput,
+          endAngle: ro + k * throughput,
+          value: throughput
+        },
+        dropOff: {
+          startAngle: ri,
+          endAngle: ri + k * dropOff,
+          value: dropOff
+        },
+        dropIn: {
+          startAngle: r - k * dropIn,
+          endAngle: r,
+          value: dropIn
         }
       };
+
       r += nodePadding;
     });
 
@@ -131,8 +150,8 @@ d3.layout.sanchord = function () {
     chords = [];
     for (var ofi = 0; ofi < n; ofi++) {
       for (var ifi = 0; ifi < n; ifi++) {
-        var source = outFlows[ofi + '-' + ifi];
-        var target = inFlows[ofi + '-' + ifi];
+        var source = outFlows[ofi + "-" + ifi];
+        var target = inFlows[ofi + "-" + ifi];
         if (source.value) {
           chords.push({source: source, target: target});
         }
@@ -142,49 +161,105 @@ d3.layout.sanchord = function () {
   }
 
 
-  chord.matrix = function (x) {
+  sanchord.matrix = function (x) {
     if (!arguments.length) return matrix;
     n = (matrix = x) && matrix.length;
     reset();
-    return chord;
+    return sanchord;
   };
 
-  chord.nodePadding = function (x) {
+  sanchord.nodePadding = function (x) {
     if (!arguments.length) return nodePadding;
     nodePadding = x;
     reset();
-    return chord;
+    return sanchord;
   };
-  chord.ioPadding = function (x) {
+  sanchord.ioPadding = function (x) {
     if (!arguments.length) return ioPadding;
     ioPadding = x;
     reset();
-    return chord;
+    return sanchord;
   };
 
-  chord.sortNodes = function (x) {
+  sanchord.sortNodes = function (x) {
     if (!arguments.length) return sortNodes;
     sortNodes = x;
     reset();
-    return chord;
+    return sanchord;
   };
 
-  chord.sortFlows = function (x) {
+  sanchord.sortFlows = function (x) {
     if (!arguments.length) return sortFlows;
     sortFlows = x;
     reset();
-    return chord;
+    return sanchord;
   };
 
-  chord.chords = function () {
+  sanchord.chords = function () {
     if (!chords) relayout();
     return chords;
   };
 
-  chord.nodes = function () {
+  sanchord.nodes = function () {
     if (!nodes) relayout();
     return nodes;
   };
 
-  return chord;
+  // Helper function to build path generator for a certain type of node related arc ("input", "output", "total", ...)
+  sanchord.nodeArc = function (type) {
+    return d3.svg.arc()
+      .startAngle(function (d) {
+        return d[type].startAngle;
+      })
+      .endAngle(function (d) {
+        return d[type].endAngle;
+      });
+  };
+
+  // Path generator for node throughputs.
+  sanchord.throughput = function () {
+    var r = 1;
+    var startAngle = function (d) {
+      return d.throughput.startAngle;
+    };
+    var endAngle = function (d) {
+      return d.throughput.endAngle;
+    };
+
+    function throughput(d) {
+      var a0 = startAngle.apply(this, [d]) - 0.5 * Math.PI;
+      var a1 = endAngle.apply(this, [d]) - 0.5 * Math.PI;
+      var am = (a0 + a1) / 2;
+      var x0 = r * Math.cos(a0);
+      var y0 = r * Math.sin(a0);
+      var xm = r * Math.cos(am);
+      var ym = r * Math.sin(am);
+      var x1 = r * Math.cos(a1);
+      var y1 = r * Math.sin(a1);
+      var ra = Math.sqrt((xm - x0) * (xm - x0) + (ym - y0) * (ym - y0));
+      var xi = r * Math.cos(am - ioPadding / 2);
+      var yi = r * Math.sin(am - ioPadding / 2);
+      var xo = r * Math.cos(am + ioPadding / 2);
+      var yo = r * Math.sin(am + ioPadding / 2);
+      var rio = Math.sqrt((xm - xi) * (xm - xi) + (ym - yi) * (ym - yi));
+
+      return (
+        "M" + x0 + "," + y0
+        + "A" + [ra, ra, 0, 1, 1, x1, y1].join(",")
+        + "A" + [r, r, 0, 0, 0, xo, yo].join(",")
+        + "A" + [rio, rio, 0, 0, 0, xi, yi].join(",")
+        + "A" + [r, r, 0, 0, 0, x0, y0].join(",")
+      );
+    }
+
+    throughput.radius = function (x) {
+      if (!arguments.length) return r;
+      r = x;
+      return throughput;
+    };
+
+    return throughput;
+  }
+
+  return sanchord;
 };
