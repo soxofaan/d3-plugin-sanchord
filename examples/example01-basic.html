@@ -31,6 +31,12 @@
             fill-opacity: .5;
         }
 
+        .nodes path.arrow {
+            stroke: #fff;
+            stroke-width: 3px;
+            opacity: .5;
+        }
+
         .nodes path.empty {
             stroke-dasharray: 1, 5;
             fill: none;
@@ -61,7 +67,7 @@
         [450, 200, 0, 1043, 0, 0],
         [6171, 8010, 12868, 0, 0, 302]
     ];
-
+/*
     var matrix = [
         [0, 8, 5, 3, 1, 0],
         [1, 0, 8, 5, 3, 0],
@@ -70,7 +76,7 @@
         [8, 5, 3, 1, 0, 0],
         [1, 1, 1, 1, 1, 0,]
     ];
-
+*/
     /*  var matrix = [
      [0, 1, 0, 0],
      [1, 0, 0, 0],
@@ -86,6 +92,13 @@
      [0, 2, 0, 1, 0, 0]
      ];
      */
+
+    var matrix = [
+        [0, 8, 5],
+        [1, 0, 8],
+        [3, 1, 0],
+    ];
+
     var sanchord = d3.layout.sanchord()
             .nodePadding(.25)
             .ioPadding(0.05)
@@ -131,6 +144,9 @@
                 return d.output.value == 0
             })
             .classed('empty', true);
+    nodesEnter.append("path")
+            .attr("class", "arrow")
+            .attr("d", sanchord.nodeArrow().innerRadius(0.8 * innerRadius + 0.2 * outerRadius).outerRadius(0.8 * outerRadius + 0.2 * innerRadius));
     //  nodesEnter.append("path")
     //          .attr("class", "node")
     //          .style("opacity", ".25")

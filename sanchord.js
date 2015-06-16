@@ -315,5 +315,76 @@ d3.layout.sanchord = function () {
 
   };
 
+  // Path generator for node flow direction arrows.
+  sanchord.nodeArrow = function () {
+    // Minimum angle (in radians) an arc should have to get an arrow.
+    var minAngle = .025;
+    // Maximum angle (in radians) an arrow should span.
+    var maxAngle = .5;
+    // (Maximum) fraction the arrow should span in the arc.
+    var fraction = .618;
+    // Inner and outer radius for the arrow head and tails.
+    var innerRadius = 1.02;
+    var outerRadius = 1.08;
+    // For which node flow part should we draw an arrow? "input", "output" or "both"?
+    var type = "both";
+
+    // Helper function for input/output arc arrows.
+    function arrowPath(a0, a1, r0, r1) {
+      var ac = (a0 + a1) / 2 - 0.5 * Math.PI;
+      var ad = Math.min(maxAngle, fraction * Math.abs(a0 - a1)) / 2;
+      if (2 * ad > minAngle) {
+        return (
+          "M" + [r0 * Math.cos(ac - ad), r0 * Math.sin(ac - ad)].join(",") +
+          "L" + [r1 * Math.cos(ac), r1 * Math.sin(ac)].join(",") +
+          "L" + [r0 * Math.cos(ac + ad), r0 * Math.sin(ac + ad)].join(",")
+        );
+      }
+      else {
+        return '';
+      }
+    }
+
+    function nodeArrow(d) {
+      path = '';
+      if (type == "input" || type == "both") {
+        path += arrowPath(d.input.startAngle, d.input.endAngle, innerRadius, outerRadius);
+      }
+      if (type == "output" || type == "both") {
+        path += arrowPath(d.output.startAngle, d.output.endAngle, outerRadius, innerRadius);
+      }
+      return path;
+    }
+
+    nodeArrow.innerRadius = function (x) {
+      if (!arguments.length) return innerRadius;
+      innerRadius = x;
+      return nodeArrow;
+    };
+
+    nodeArrow.outerRadius = function (x) {
+      if (!arguments.length) return outerRadius;
+      outerRadius = x;
+      return nodeArrow;
+    };
+
+    nodeArrow.type = function (x) {
+      if (!arguments.length) return type;
+      type = x;
+      return nodeArrow;
+    };
+
+    return nodeArrow;
+  };
+
+  // Convenience functions
+  sanchord.nodeInputArrow = function () {
+    return sanchord.nodeArrow().type('input');
+  };
+
+  sanchord.nodeOutputArrow = function () {
+    return sanchord.nodeArrow().type('output');
+  };
+
   return sanchord;
 };
