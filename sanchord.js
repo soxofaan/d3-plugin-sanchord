@@ -224,13 +224,15 @@ d3.layout.sanchord = function () {
       var a0 = d.throughput.startAngle - 0.5 * Math.PI;
       var a1 = d.throughput.endAngle - 0.5 * Math.PI;
       var am = (a0 + a1) / 2;
+      var ad = Math.abs(a0 - a1);
+      var br = 1 + 0.5 * ad;
+      var sr = 0.2 * ad * ad;
       var x0 = r * Math.cos(a0);
       var y0 = r * Math.sin(a0);
       var xm = r * Math.cos(am);
       var ym = r * Math.sin(am);
       var x1 = r * Math.cos(a1);
       var y1 = r * Math.sin(a1);
-      var ra = Math.sqrt((xm - x0) * (xm - x0) + (ym - y0) * (ym - y0));
       var xi = r * Math.cos(am - ioPadding / 2);
       var yi = r * Math.sin(am - ioPadding / 2);
       var xo = r * Math.cos(am + ioPadding / 2);
@@ -239,7 +241,8 @@ d3.layout.sanchord = function () {
 
       return (
         "M" + [x0, y0].join(",") +
-        "A" + [ra, ra, 0, 1, 1, x1, y1].join(",") +
+        "C" + [br * x0, br * y0, br * (xm + sr * ym), br * (ym - sr * xm), br * xm, br * ym].join(",") +
+        "S" + [br * x1, br * y1, x1, y1].join(",") +
         "A" + [r, r, 0, 0, 0, xo, yo].join(",") +
         "A" + [rio, rio, 0, 0, 0, xi, yi].join(",") +
         "A" + [r, r, 0, 0, 0, x0, y0].join(",") +
