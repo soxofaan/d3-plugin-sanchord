@@ -2,27 +2,34 @@
 <meta charset="utf-8">
 <style>
 
-  body {
-    font: 10px sans-serif;
-  }
+    body {
+        font: 10px sans-serif;
+    }
 
-  .chords path {
-    fill-opacity: .67;
-    stroke: #000;
-    stroke-width: .5px;
-  }
-  .nodes path {
-    fill-opacity: .67;
-    stroke: #000;
-    stroke-width: .5px;
-  }
+    .chords path {
+        fill-opacity: .67;
+        stroke: #000;
+        stroke-width: .5px;
+    }
 
-  .nodes .input, .nodes .output {
-    fill-opacity: 1;
-  }
-  .nodes .throughput, .nodes .drop-off, .nodes .drop-in {
-    fill-opacity: .5;
-  }
+    .nodes path {
+        fill-opacity: .67;
+        stroke: #000;
+        stroke-width: .5px;
+    }
+
+    .nodes .input, .nodes .output {
+        fill-opacity: 1;
+    }
+
+    .nodes .throughput, .nodes .drop-off, .nodes .drop-in {
+        fill-opacity: .5;
+    }
+
+    .nodes path.empty {
+        stroke-dasharray: 1, 5;
+        fill: none;
+    }
 
 </style>
 <body>
@@ -32,88 +39,131 @@
 
 <script>
 
-  var matrix = [
-    [11975, 5871, 8916, 2868],
-    [1951, 10048, 2060, 6171],
-    [8010, 16145, 8090, 8045],
-    [1013, 990, 940, 6907]
-  ];
+    var matrix = [
+        [11975, 5871, 8916, 2868],
+        [1951, 10048, 2060, 6171],
+        [8010, 16145, 8090, 8045],
+        [1013, 990, 940, 6907]
+    ];
 
-  var sanchord = d3.layout.sanchord()
-          .nodePadding(.2)
-          .ioPadding(0.05)
-          .matrix(matrix);
+    var matrix = [
+        [11975, 5871, 0, 0, 8943, 0],
+        [0, 10048, 2060, 0, 0, 350],
+        [0, 16145, 0, 8045, 8090, 0],
+        [1013, 0, 0, 6907, 990, 4203],
+        [450, 200, 0, 1043, 0, 0],
+        [6171, 8010, 12868, 0, 0, 302]
+    ];
 
-  var width = 600;
-  var height = 600;
-  var innerRadius = Math.min(width, height) * .3;
-  var outerRadius = innerRadius * 1.2;
+    var matrix = [
+        [0, 8, 5, 3, 1, 0],
+        [1, 0, 8, 5, 3, 0],
+        [3, 1, 0, 8, 5, 0],
+        [5, 3, 1, 0, 8, 0],
+        [8, 5, 3, 1, 0, 0],
+        [1, 1, 1, 1, 1, 0,]
+    ];
 
-  var fill = d3.scale.ordinal()
-          .domain(d3.range(4))
-          .range(["#039", "#b03", "#870", "#0b3"]);
+    /*  var matrix = [
+     [0, 1, 0, 0],
+     [1, 0, 0, 0],
+     [0, 0, 0, 1],
+     [0, 0, 1, 0]
+     ];
+     var matrix = [
+     [0, 0, 1, 0, 2, 0],
+     [0, 0, 0, 2, 0, 1],
+     [2, 0, 0, 0, 1, 0],
+     [0, 1, 0, 0, 0, 2],
+     [1, 0, 2, 0, 0, 0],
+     [0, 2, 0, 1, 0, 0]
+     ];
+     */
+    var sanchord = d3.layout.sanchord()
+            .nodePadding(.25)
+            .ioPadding(0.05)
+            .matrix(matrix);
 
-  var svg = d3.select("body").append("svg")
-          .attr("width", width)
-          .attr("height", height)
-          .append("g")
-          .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+    var width = 600;
+    var height = 600;
+    var innerRadius = Math.min(width, height) * .25;
+    var outerRadius = innerRadius * 1.2;
 
-  var nodes = svg.append("g").attr("class", "nodes").selectAll("path")
-          .data(sanchord.nodes);
+    var fill = d3.scale.category10();
 
-  var nodesEnter = nodes.enter().append("g")
-          .attr('class', 'node')
-          .style("fill", function (d) {
-            return fill(d.index);
-          })
-          .style("stroke", function (d) {
-            return fill(d.index);
-          })
-          .on("mouseover", fade(.1))
-          .on("mouseout", fade(1));
-  nodesEnter.append("path")
-          .attr("class", "input")
-          .attr("d", sanchord.nodeArc("input").innerRadius(innerRadius).outerRadius(outerRadius));
-  nodesEnter.append("path")
-          .attr("class", "output")
-          .attr("d", sanchord.nodeArc("output").innerRadius(innerRadius).outerRadius(outerRadius));
-//  nodesEnter.append("path")
-//          .attr("class", "node")
-//          .style("opacity", ".25")
-//          .attr("d", sanchord.nodeArc("total").innerRadius(2 * innerRadius - outerRadius).outerRadius(2 * outerRadius - innerRadius));
-  nodesEnter.append("path")
-          .attr("class", "throughput")
-          .attr("d", sanchord.throughput().radius(outerRadius));
-  nodesEnter.append("path")
-          .attr("class", "drop-off")
-          .attr("d", sanchord.drop().dropOff().innerRadius(outerRadius).outerRadius(outerRadius*1.3));
-  nodesEnter.append("path")
-          .attr("class", "drop-in")
-          .attr("d", sanchord.drop().dropIn().innerRadius(outerRadius).outerRadius(outerRadius*1.3));
+    var svg = d3.select("body").append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .append("g")
+            .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+    var nodes = svg.append("g").attr("class", "nodes").selectAll("path")
+            .data(sanchord.nodes);
+
+    var nodesEnter = nodes.enter().append("g")
+            .attr('class', 'node')
+            .style("fill", function (d) {
+                return fill(d.index);
+            })
+            .style("stroke", function (d) {
+                return fill(d.index);
+            })
+            .on("mouseover", fade(.1))
+            .on("mouseout", fade(1));
+    nodesEnter.append("path")
+            .attr("class", "input")
+            .attr("d", sanchord.nodeArc("input").innerRadius(innerRadius).outerRadius(outerRadius))
+            .filter(function (d) {
+                return d.input.value == 0
+            })
+            .classed('empty', true);
+    nodesEnter.append("path")
+            .attr("class", "output")
+            .attr("d", sanchord.nodeArc("output").innerRadius(innerRadius).outerRadius(outerRadius))
+            .filter(function (d) {
+                return d.output.value == 0
+            })
+            .classed('empty', true);
+    //  nodesEnter.append("path")
+    //          .attr("class", "node")
+    //          .style("opacity", ".25")
+    //          .attr("d", sanchord.nodeArc("total").innerRadius(2 * innerRadius - outerRadius).outerRadius(2 * outerRadius - innerRadius));
+    nodesEnter.append("path")
+            .attr("class", "throughput")
+            .attr("d", sanchord.throughput().radius(outerRadius))
+            .filter(function (d) {
+                return d.throughput.value == 0
+            })
+            .classed('empty', true);
+    nodesEnter.append("path")
+            .attr("class", "drop-off")
+            .attr("d", sanchord.drop().dropOff().innerRadius(outerRadius).outerRadius(outerRadius * 1.3));
+    nodesEnter.append("path")
+            .attr("class", "drop-in")
+            .attr("d", sanchord.drop().dropIn().innerRadius(outerRadius).outerRadius(outerRadius * 1.3));
 
 
-  svg.append("g")
-          .attr("class", "chords")
-          .selectAll("path")
-          .data(sanchord.chords)
-          .enter().append("path")
-          .attr("d", d3.svg.chord().radius(innerRadius))
-          .style("fill", function (d) {
-            return fill(d.target.outIndex);
-          })
-          .style("opacity", 1);
+    svg.append("g")
+            .attr("class", "chords")
+            .selectAll("path")
+            .data(sanchord.chords)
+            .enter().append("path")
+            .attr("d", d3.svg.chord().radius(innerRadius))
+            .style("fill", function (d) {
+                return fill(d.target.outIndex);
+            })
+            .style("opacity", 1);
 
-  // Returns an event handler for fading a given chord group.
-  function fade(opacity) {
-    return function (g, i) {
-      svg.selectAll(".chords path")
-              .filter(function (d) {
-                return d.source.outIndex != i && d.target.inIndex != i;
-              })
-              .transition()
-              .style("opacity", opacity);
-    };
-  }
+    // Returns an event handler for fading a given chord group.
+    function fade(opacity) {
+        return function (g, i) {
+            svg.selectAll(".chords path")
+                    .filter(function (d) {
+                        return d.source.outIndex != i && d.target.inIndex != i;
+                    })
+                    .transition()
+                    .style("opacity", opacity);
+        };
+    }
 
 </script>
