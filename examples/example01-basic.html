@@ -83,6 +83,8 @@
      [0, 0, 0, 1],
      [0, 0, 1, 0]
      ];
+     */
+    /*
      var matrix = [
      [0, 0, 1, 0, 2, 0],
      [0, 0, 0, 2, 0, 1],
@@ -92,22 +94,24 @@
      [0, 2, 0, 1, 0, 0]
      ];
      */
+    /*
+     var matrix = [
+     [0, 8, 5],
+     [1, 0, 8],
+     [3, 1, 0],
+     ];
+     */
+    /*
 
-    var matrix = [
-        [0, 8, 5],
-        [1, 0, 8],
-        [3, 1, 0],
-    ];
-
-    var matrix = [
-        [1, 0, 0, 0, 0, 0],
-        [0, 2, 0, 0, 0, 0],
-        [0, 0, 4, 0, 0, 0],
-        [0, 0, 0, 8, 0, 0],
-        [0, 0, 0, 0, 16, 0],
-        [0, 0, 0, 0, 0, 32]
-    ];
-
+     var matrix = [
+     [1, 0, 0, 0, 0, 0],
+     [0, 2, 0, 0, 0, 0],
+     [0, 0, 4, 0, 0, 0],
+     [0, 0, 0, 8, 0, 0],
+     [0, 0, 0, 0, 16, 0],
+     [0, 0, 0, 0, 0, 32]
+     ];
+     */
 
     var sanchord = d3.layout.sanchord()
             .nodePadding(.25)
@@ -142,14 +146,14 @@
             .on("mouseout", fade(1));
     nodesEnter.append("path")
             .attr("class", "input")
-            .attr("d", sanchord.nodeArc("input").innerRadius(innerRadius).outerRadius(outerRadius))
+            .attr("d", sanchord.inputArc().innerRadius(innerRadius).outerRadius(outerRadius))
             .filter(function (d) {
                 return d.input.value == 0
             })
             .classed('empty', true);
     nodesEnter.append("path")
             .attr("class", "output")
-            .attr("d", sanchord.nodeArc("output").innerRadius(innerRadius).outerRadius(outerRadius))
+            .attr("d", sanchord.outputArc().innerRadius(innerRadius).outerRadius(outerRadius))
             .filter(function (d) {
                 return d.output.value == 0
             })
@@ -170,10 +174,10 @@
             .classed('empty', true);
     nodesEnter.append("path")
             .attr("class", "drop-off")
-            .attr("d", sanchord.drop().dropOff().innerRadius(outerRadius).outerRadius(outerRadius * 1.3));
+            .attr("d", sanchord.dropOff().innerRadius(outerRadius).outerRadius(outerRadius * 1.3));
     nodesEnter.append("path")
             .attr("class", "drop-in")
-            .attr("d", sanchord.drop().dropIn().innerRadius(outerRadius).outerRadius(outerRadius * 1.3));
+            .attr("d", sanchord.dropIn().innerRadius(outerRadius).outerRadius(outerRadius * 1.3));
 
 
     svg.append("g")

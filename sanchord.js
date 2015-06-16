@@ -205,8 +205,8 @@ d3.layout.sanchord = function () {
     return nodes;
   };
 
-  // Helper function to build path generator for a certain type of node related arc ("input", "output", "total", ...)
-  sanchord.nodeArc = function (type) {
+  // Helper function to build path generator of node arcs.
+  function nodeArc(type) {
     return d3.svg.arc()
       .startAngle(function (d) {
         return d[type].startAngle;
@@ -214,6 +214,16 @@ d3.layout.sanchord = function () {
       .endAngle(function (d) {
         return d[type].endAngle;
       });
+  }
+
+  // Path generator for node input arcs.
+  sanchord.inputArc = function () {
+    return nodeArc('input');
+  };
+
+  // Path generator for node output arcs.
+  sanchord.outputArc = function () {
+    return nodeArc('output');
   };
 
   // Path generator for node throughputs.
@@ -259,9 +269,8 @@ d3.layout.sanchord = function () {
     return throughput;
   };
 
-  // Path generator for drop-off and drop-in flows
-  sanchord.drop = function () {
-    var type = "dropOff";
+  // Helper function to build path generator functions for the drop-off and drop-in flows.
+  function drop(type) {
     var innerRadius = 1;
     var outerRadius = 1.1;
 
@@ -292,16 +301,6 @@ d3.layout.sanchord = function () {
       }
     }
 
-    drop.dropOff = function () {
-      type = "dropOff";
-      return drop;
-    };
-
-    drop.dropIn = function () {
-      type = "dropIn";
-      return drop;
-    };
-
     drop.innerRadius = function (x) {
       if (!arguments.length) return innerRadius;
       innerRadius = x;
@@ -316,6 +315,16 @@ d3.layout.sanchord = function () {
 
     return drop;
 
+  }
+
+  // Path generator for drop-off flows
+  sanchord.dropOff = function () {
+    return drop('dropOff');
+  };
+
+  // Path generator for drop-in flows
+  sanchord.dropIn = function () {
+    return drop('dropIn');
   };
 
   // Path generator for node flow direction arrows.
@@ -381,11 +390,11 @@ d3.layout.sanchord = function () {
   };
 
   // Convenience functions
-  sanchord.nodeInputArrow = function () {
+  sanchord.inputArrow = function () {
     return sanchord.nodeArrow().type('input');
   };
 
-  sanchord.nodeOutputArrow = function () {
+  sanchord.outputArrow = function () {
     return sanchord.nodeArrow().type('output');
   };
 
