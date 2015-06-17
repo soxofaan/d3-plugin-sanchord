@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="utf-8">
+    <title>Sanchord Diagram Example</title>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"/>
+
+    <style>
+
+        #chart svg {
+            border: 1px solid #aaa;
+        }
+
+        .chords path {
+            fill-opacity: .67;
+            stroke: #000;
+            stroke-width: .5px;
+        }
+
+        .nodes path {
+            fill-opacity: .67;
+            stroke: #000;
+            stroke-width: .5px;
+        }
+
+        .nodes .input, .nodes .output {
+            fill-opacity: 1;
+        }
+
+        .nodes .throughput, .nodes .drop-off, .nodes .drop-in {
+            fill-opacity: .5;
+        }
+
+        .nodes path.arrow {
+            stroke: #fff;
+            stroke-width: 3px;
+            opacity: .5;
+        }
+
+        .nodes path.empty {
+            stroke-dasharray: 1, 5;
+            fill: none;
+        }
+
+    </style>
+</head>
+<body>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js" charset="utf-8"></script>
+<script src="../sanchord.js"></script>
+
+<a href="https://github.com/soxofaan/d3-plugin-sanchord"><img style="position: absolute; top: 0; right: 0; border: 0;"
+                                                              src="https://camo.githubusercontent.com/652c5b9acfaddf3a9c326fa6bde407b87f7be0f4/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6f72616e67655f6666373630302e706e67"
+                                                              alt="Fork me on GitHub"
+                                                              data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png"></a>
+
+<div class="container">
+
+    <h1>Sanchord Demo
+        <small>(a d3.js plugin)</small>
+    </h1>
+
+    <div class="row">
+        <div class="col-xs-12 col-md-4">
+
+            <div id="matrix-select" class="form-group">
+                <label for="matrix">Flow Matrix:</label>
+            </div>
+
+            <div>
+                <table id="matrix-table" class="table table-bordered table-condensed">
+                    <tbody></tbody>
+                </table>
+            </div>
+
+        </div>
+        <div class="col-xs-12 col-md-8">
+            <div id="chart"></div>
+        </div>
+    </div>
+
+
+</div>
+
+<script>
+
+    // Some setup stuff.
+    var width = 600;
+    var height = 600;
+
+
+    var svg = d3.select("#chart").append("svg")
+            .attr("width", width)
+            .attr("height", height)
+            .append("g")
+            .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+    var sanchordDraw = (function (svg, width, height) {
+
+        // Sanchord layout object
+        var sanchord = d3.layout.sanchord()
+                .nodePadding(.25)
+                .ioPadding(0.05);
+
+        var innerRadius = Math.min(width, height) * .25;
+        var outerRadius = innerRadius * 1.2;
+        var fill = d3.scale.category10();
+
+        var nodeGroup = svg.append("g").attr("class", "nodes");
+        var chordGroup = svg.append("g").attr("class", "chords");
+
+        // Returns an event handler for fading a given chord group.
+        function fade(opacity) {
+            return function (g, i) {
+                svg.selectAll(".chords path")
+                        .filter(function (d) {
+                            return d.source.outIndex != i && d.target.inIndex != i;
+                        })
+                        .transition()
+                        .style("opacity", opacity);
+            };
+        }
+
+        // Callback to draw on a data set.
+        function sanchordDraw(matrix) {
+            // Feed it with a matrix.
+            sanchord.matrix(matrix);
+
+            // Nodes: bind data.
+            var nodes = nodeGroup.selectAll('g.node').data(sanchord.nodes);
+            // Enter.
+            var nodesEnter = nodes.enter().append("g").attr('class', 'node');
+            nodesEnter.append("path").attr("class", "input");
+            nodesEnter.append("path").attr("class", "output");
+            nodesEnter.append("path").attr("class", "throughput");
+            nodesEnter.append("path").attr("class", "drop-off");
+            nodesEnter.append("path").attr("class", "drop-in");
+            nodesEnter.append("path").attr("class", "arrow");
+            // Update
+            nodes
+                    .style("fill", function (d) {
+                        return fill(d.index);
+                    })
+                    .style("stroke", function (d) {
+                        return fill(d.index);
+                    })
+                    .on("mouseover", fade(.1))
+                    .on("mouseout", fade(1));
+
+            nodes.select("path.input")
+                    .attr("d", sanchord.inputArc().innerRadius(innerRadius).outerRadius(outerRadius))
+                    .classed('empty', function (d) {
+                        return d.input.value == 0
+                    });
+            nodes.select("path.output")
+                    .attr("d", sanchord.outputArc().innerRadius(innerRadius).outerRadius(outerRadius))
+                    .classed('empty', function (d) {
+                        return d.output.value == 0
+                    });
+            nodes.select("path.throughput")
+                    .attr("d", sanchord.throughput().radius(outerRadius))
+                    .classed('empty', function (d) {
+                        return d.throughput.value == 0
+                    });
+            nodes.select("path.drop-off")
+                    .attr("d", sanchord.dropOff().innerRadius(outerRadius).outerRadius(outerRadius * 1.5));
+            nodes.select("path.drop-in")
+                    .attr("d", sanchord.dropIn().innerRadius(outerRadius).outerRadius(outerRadius * 1.5));
+            nodes.select("path.arrow")
+                    .attr("d", sanchord.nodeArrow().innerRadius(0.8 * innerRadius + 0.2 * outerRadius).outerRadius(0.8 * outerRadius + 0.2 * innerRadius));
+            // Exit
+            nodes.exit().remove();
+
+            // Chords: bind data.
+            var chords = chordGroup.selectAll("path").data(sanchord.chords, function (d) {
+                return d.id;
+            });
+            // Enter
+            chords.enter().append("path").attr("class", "chord");
+            // Update
+            chords.attr("d", d3.svg.chord().radius(innerRadius))
+                    .style("fill", function (d) {
+                        return fill(d.target.outIndex);
+                    })
+                    .style("opacity", 1);
+            // Exit
+            chords.exit().remove();
+
+
+        }
+
+        return sanchordDraw;
+    })(svg, width, height);
+
+
+    var matrices = {
+        color: [
+            [11975, 5871, 8916, 2868],
+            [1951, 10048, 2060, 6171],
+            [8010, 16145, 8090, 8045],
+            [1013, 990, 940, 6907]
+        ],
+        taste: [
+            [11975, 5871, 0, 0, 8943, 0],
+            [0, 10048, 2060, 0, 0, 350],
+            [0, 16145, 0, 8045, 8090, 0],
+            [1013, 0, 0, 6907, 990, 4203],
+            [450, 200, 0, 890, 0, 0],
+            [6171, 8010, 12868, 0, 0, 302]
+        ],
+        sparse: [
+            [0, 5, 0, 0, 9, 0],
+            [0, 0, 0, 0, 0, 6],
+            [0, 0, 2, 0, 2, 0],
+            [0, 0, 0, 4, 0, 0],
+            [0, 3, 0, 8, 0, 0],
+            [6, 0, 0, 0, 0, 0]
+        ],
+        fibo: [
+            [0, 8, 5, 3, 1],
+            [1, 0, 8, 5, 3],
+            [3, 1, 0, 8, 5],
+            [5, 3, 1, 0, 8],
+            [8, 5, 3, 1, 0]
+        ],
+        pairs: [
+            [0, 1, 0, 0],
+            [1, 0, 0, 0],
+            [0, 0, 0, 1],
+            [0, 0, 1, 0]
+        ],
+        tangledtriangles: [
+            [0, 0, 1, 0, 2, 0],
+            [0, 0, 0, 2, 0, 1],
+            [2, 0, 0, 0, 1, 0],
+            [0, 1, 0, 0, 0, 2],
+            [1, 0, 2, 0, 0, 0],
+            [0, 2, 0, 1, 0, 0]
+        ],
+        flower: [
+            [0, 8, 2],
+            [2, 0, 8],
+            [8, 2, 0]
+        ],
+        pow2: [
+            [1, 0, 0, 0, 0, 0],
+            [0, 2, 0, 0, 0, 0],
+            [0, 0, 4, 0, 0, 0],
+            [0, 0, 0, 8, 0, 0],
+            [0, 0, 0, 0, 16, 0],
+            [0, 0, 0, 0, 0, 32]
+        ],
+        sevenchain: [
+            [0, 8, 1, 0, 0, 0, 0],
+            [0, 0, 8, 1, 0, 0, 0],
+            [0, 0, 0, 8, 1, 0, 0],
+            [0, 0, 0, 0, 8, 1, 0],
+            [0, 0, 0, 0, 0, 8, 1],
+            [1, 0, 0, 0, 0, 0, 8],
+            [8, 1, 0, 0, 0, 0, 0]
+        ],
+        io: [
+            [0, 3, 2, 0, 5],
+            [0, 0, 1, 2, 0],
+            [0, 0, 0, 3, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 5, 0]
+        ]
+    };
+
+    function loadMatrix(selected) {
+        var matrix = matrices[selected];
+        console.info(matrix);
+        sanchordDraw(matrix);
+
+        // Show matrix as a table
+        var tr = d3.select('table#matrix-table tbody').selectAll('tr')
+                .data(matrix);
+        tr.enter().append('tr');
+        tr.exit().remove();
+        var td = tr.selectAll('td')
+                .data(function (d) {
+                    return d;
+                });
+        td.enter().append("td");
+        td.text(function (d) {
+            return d;
+        });
+        td.exit().remove()
+
+
+    }
+
+
+    // Try to get initial data set from url fragment.
+    var selected = window.location.hash.replace(/^#/, '');
+    if (!(selected in matrices)) {
+        selected = d3.keys(matrices)[0];
+    }
+
+    // Populate matrix selector
+    var dataSetSelect = d3.select('#matrix-select').append('select').attr('class', 'form-control');
+    dataSetSelect.on('change', function () {
+        selected = dataSetSelect.property('value');
+        loadMatrix(selected);
+        window.location.hash = selected;
+    });
+    dataSetSelect.selectAll('option')
+            .data(d3.keys(matrices))
+            .enter()
+            .append('option')
+            .attr('value', function (d) {
+                return d;
+            })
+            .attr('selected', function (d) {
+                return d == selected ? 'selected' : undefined
+            })
+            .text(function (d) {
+                return d;
+            });
+
+    // Load initial data set.
+    loadMatrix(selected);
+
+</script>
+
+</body>
+</html>

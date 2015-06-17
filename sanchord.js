@@ -153,7 +153,11 @@ d3.layout.sanchord = function () {
         var source = outFlows[ofi + "-" + ifi];
         var target = inFlows[ofi + "-" + ifi];
         if (source.value) {
-          chords.push({source: source, target: target});
+          chords.push({
+            id: ofi + "-" + ifi,
+            source: source,
+            target: target
+          });
         }
       }
     }
