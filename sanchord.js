@@ -164,10 +164,30 @@ d3.layout.sanchord = function () {
 
   }
 
+  // Sanitize the given matrix (square size, positive values, ...)
+  function sanitize_matrix(orig) {
+    // Find the maximum row/column length.
+    var n = Math.max(orig.length, d3.max(orig, function (row) {
+      return row.length;
+    }));
+    // Some helper functions.
+    var zero = function () { return 0; };
+    var sanitize = function (v) { return (isNaN(v) || v < 0) ? 0 : +v; };
+    // Sanitize input.
+    var sanitized = orig.map(function (row) {
+      // Sanitize row cells and path with zero cells if necessary.
+      return row.map(sanitize).concat(d3.range(n - row.length).map(zero));
+    });
+    // Pad with zero rows if necessary
+    for (var i = n - orig.length; i > 0; i--) {
+      sanitized.push(d3.range(n).map(zero));
+    }
+    return sanitized;
+  }
 
   sanchord.matrix = function (x) {
     if (!arguments.length) return matrix;
-    n = (matrix = x) && matrix.length;
+    n = (matrix = sanitize_matrix(x)) && matrix.length;
     reset();
     return sanchord;
   };
