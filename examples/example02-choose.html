@@ -86,35 +86,27 @@
 
 <script>
 
-    // Some setup stuff.
-    var width = 600;
-    var height = 600;
-
-
     var svg = d3.select("#chart").append("svg")
-            .attr("width", width)
-            .attr("height", height)
-            .append("g")
-            .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+            .attr("width", '100%')
+            .attr("min-height", '200');
 
-    var sanchordDraw = (function (svg, width, height) {
+    var sanchordDraw = (function (svg) {
 
         // Sanchord layout object
         var sanchord = d3.layout.sanchord()
                 .nodePadding(.25)
                 .ioPadding(0.05);
 
-        var innerRadius = Math.min(width, height) * .25;
-        var outerRadius = innerRadius * 1.2;
         var fill = d3.scale.category10();
 
-        var nodeGroup = svg.append("g").attr("class", "nodes");
-        var chordGroup = svg.append("g").attr("class", "chords");
+        var drawGroup = svg.append("g");
+        var nodeGroup = drawGroup.append("g").attr("class", "nodes");
+        var chordGroup = drawGroup.append("g").attr("class", "chords");
 
         // Returns an event handler for fading a given chord group.
         function fade(opacity) {
             return function (g, i) {
-                svg.selectAll(".chords path")
+                chordGroup.selectAll(".chords path")
                         .filter(function (d) {
                             return d.source.outIndex != i && d.target.inIndex != i;
                         })
@@ -125,6 +117,16 @@
 
         // Callback to draw on a data set.
         function sanchordDraw(matrix) {
+            // Update svg dimensions (if necessary)
+            var width = svg.node().getBoundingClientRect().width;
+            var height = Math.min(width, 600);
+
+            svg.attr('height', height);
+            drawGroup.attr("transform", "translate(" +  width/2 + "," + height/2 + ")");
+
+            var innerRadius = Math.min(width, height) * .25;
+            var outerRadius = innerRadius * 1.2;
+
             // Feed it with a matrix.
             sanchord.matrix(matrix);
 
@@ -192,7 +194,7 @@
         }
 
         return sanchordDraw;
-    })(svg, width, height);
+    })(svg);
 
 
     var matrices = {
@@ -295,8 +297,6 @@
             return JSON.stringify(d);
         });
         td.exit().remove()
-
-
     }
 
 
@@ -329,6 +329,11 @@
 
     // Load initial data set.
     loadMatrix(selected);
+
+    // Redraw svg on window resize event.
+    d3.select(window).on('resize', function() {
+        sanchordDraw(matrices[selected]);
+    });
 
 </script>
 
