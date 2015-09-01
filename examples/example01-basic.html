@@ -42,6 +42,12 @@
             fill: none;
         }
 
+        .nodes .label {
+            font-size: 12pt;
+            fill: black;
+            stroke: none;
+        }
+
     </style>
 </head>
 <body>
@@ -58,12 +64,14 @@
         [8010, 16145, 8090, 8045],
         [1013, 990, 940, 6907]
     ];
+    var labels = ['London', 'Paris', 'Rome', 'Helsinki'];
 
     // Build sanchord helper object.
     var sanchord = d3.layout.sanchord()
             .nodePadding(.25)
             .ioPadding(0.05)
-            .matrix(matrix);
+            .matrix(matrix)
+            .labels(labels);
 
     // Some size related settings.
     var width = 600;
@@ -131,6 +139,21 @@
     nodesEnter.append("path")
             .attr("class", "drop-in")
             .attr("d", sanchord.dropIn().innerRadius(outerRadius).outerRadius(outerRadius * 1.3));
+    // Add node label.
+    nodesEnter.append('text')
+            .attr('class', 'label')
+            .attr('x', function (d) {
+                return 1.1 * outerRadius * Math.cos(d.total.midAngle - 0.5 * Math.PI);
+            })
+            .attr('y', function (d) {
+                return 1.1 * outerRadius * Math.sin(d.total.midAngle - 0.5 * Math.PI);
+            })
+            .attr('text-anchor', function(d) {
+                return d.total.midAngle > Math.PI ? 'end' : 'start';
+            })
+            .text(function (d) {
+                return d.total.label;
+            });
 
 
     svg.append("g")

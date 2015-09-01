@@ -2,6 +2,7 @@ d3.layout.sanchord = function () {
   var sanchord = {};
   var nodes, chords;
   var matrix, n;
+  var labels = {};
   var nodePadding = 0, ioPadding = 0;
   var sortNodes, sortFlows;
 
@@ -123,8 +124,10 @@ d3.layout.sanchord = function () {
         total: {
           index: ni,
           startAngle: ri,
+          midAngle: (ri + r) / 2,
           endAngle: r,
-          value: nodeSums[ni]
+          value: nodeSums[ni],
+          label: labels[ni]
         },
         throughput: {
           startAngle: (ro - ioPadding) - k * throughput,
@@ -188,6 +191,13 @@ d3.layout.sanchord = function () {
   sanchord.matrix = function (x) {
     if (!arguments.length) return matrix;
     n = (matrix = sanitize_matrix(x)) && matrix.length;
+    reset();
+    return sanchord;
+  };
+
+  sanchord.labels = function (x) {
+    if (!arguments.length) return labels;
+    labels = x;
     reset();
     return sanchord;
   };
