@@ -59,65 +59,13 @@
         [1013, 990, 940, 6907]
     ];
 
-    var matrix = [
-        [11975, 5871, 0, 0, 8943, 0],
-        [0, 10048, 2060, 0, 0, 350],
-        [0, 16145, 0, 8045, 8090, 0],
-        [1013, 0, 0, 6907, 990, 4203],
-        [450, 200, 0, 1043, 0, 0],
-        [6171, 8010, 12868, 0, 0, 302]
-    ];
-    /*
-     var matrix = [
-     [0, 8, 5, 3, 1, 0],
-     [1, 0, 8, 5, 3, 0],
-     [3, 1, 0, 8, 5, 0],
-     [5, 3, 1, 0, 8, 0],
-     [8, 5, 3, 1, 0, 0],
-     [1, 1, 1, 1, 1, 0,]
-     ];
-     */
-    /*  var matrix = [
-     [0, 1, 0, 0],
-     [1, 0, 0, 0],
-     [0, 0, 0, 1],
-     [0, 0, 1, 0]
-     ];
-     */
-    /*
-     var matrix = [
-     [0, 0, 1, 0, 2, 0],
-     [0, 0, 0, 2, 0, 1],
-     [2, 0, 0, 0, 1, 0],
-     [0, 1, 0, 0, 0, 2],
-     [1, 0, 2, 0, 0, 0],
-     [0, 2, 0, 1, 0, 0]
-     ];
-     */
-    /*
-     var matrix = [
-     [0, 8, 5],
-     [1, 0, 8],
-     [3, 1, 0],
-     ];
-     */
-    /*
-
-     var matrix = [
-     [1, 0, 0, 0, 0, 0],
-     [0, 2, 0, 0, 0, 0],
-     [0, 0, 4, 0, 0, 0],
-     [0, 0, 0, 8, 0, 0],
-     [0, 0, 0, 0, 16, 0],
-     [0, 0, 0, 0, 0, 32]
-     ];
-     */
-
+    // Build sanchord helper object.
     var sanchord = d3.layout.sanchord()
             .nodePadding(.25)
             .ioPadding(0.05)
             .matrix(matrix);
 
+    // Some size related settings.
     var width = 600;
     var height = 600;
     var innerRadius = Math.min(width, height) * .25;
@@ -125,15 +73,18 @@
 
     var fill = d3.scale.category10();
 
+    // Set up canvas to draw on.
     var svg = d3.select("body").append("svg")
             .attr("width", width)
             .attr("height", height)
             .append("g")
             .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 
+    // D3 selection of the diagram nodes.
     var nodes = svg.append("g").attr("class", "nodes").selectAll("path")
             .data(sanchord.nodes);
 
+    // Entering nodes: each is a group of several elements.
     var nodesEnter = nodes.enter().append("g")
             .attr('class', 'node')
             .style("fill", function (d) {
@@ -144,6 +95,7 @@
             })
             .on("mouseover", fade(.1))
             .on("mouseout", fade(1));
+    // The input arc of a node.
     nodesEnter.append("path")
             .attr("class", "input")
             .attr("d", sanchord.inputArc().innerRadius(innerRadius).outerRadius(outerRadius))
@@ -151,6 +103,7 @@
                 return d.input.value == 0
             })
             .classed('empty', true);
+    // The output arc of a node.
     nodesEnter.append("path")
             .attr("class", "output")
             .attr("d", sanchord.outputArc().innerRadius(innerRadius).outerRadius(outerRadius))
@@ -158,13 +111,11 @@
                 return d.output.value == 0
             })
             .classed('empty', true);
+    // The direction indicator arrows on the node's input and output arcs.
     nodesEnter.append("path")
             .attr("class", "arrow")
             .attr("d", sanchord.nodeArrow().innerRadius(0.8 * innerRadius + 0.2 * outerRadius).outerRadius(0.8 * outerRadius + 0.2 * innerRadius));
-    //  nodesEnter.append("path")
-    //          .attr("class", "node")
-    //          .style("opacity", ".25")
-    //          .attr("d", sanchord.nodeArc("total").innerRadius(2 * innerRadius - outerRadius).outerRadius(2 * outerRadius - innerRadius));
+    // The "internal" throughput in each node.
     nodesEnter.append("path")
             .attr("class", "throughput")
             .attr("d", sanchord.throughput().radius(outerRadius))
@@ -172,9 +123,11 @@
                 return d.throughput.value == 0
             })
             .classed('empty', true);
+    // The net output ("drop off") of a node.
     nodesEnter.append("path")
             .attr("class", "drop-off")
             .attr("d", sanchord.dropOff().innerRadius(outerRadius).outerRadius(outerRadius * 1.3));
+    // The net input of a node.
     nodesEnter.append("path")
             .attr("class", "drop-in")
             .attr("d", sanchord.dropIn().innerRadius(outerRadius).outerRadius(outerRadius * 1.3));
